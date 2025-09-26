@@ -2,35 +2,41 @@ import cv2
 import numpy as np
 
 
-def read_video(cam):
-    cap = cv2.VideoCapture(cam)
-    if cap.isOpened():
-        while True:
-            ret, frame = cap.read()
-            if ret:
-                color_thresholding(frame)
-            else:
-                print("frame lost!")
-                cap.release()
-                break
-    else:
-        print("Unable to open camera!")
-        cap.release()
+def nothing(x):
+    pass
 
 
-def image_read(url):
-    img = cv2.imread(url)
-    color_thresholding(img)
+# Load image
+img = cv2.imread("Data/flowers.jpg")
+if img is None:
+    print("Error: Could not load image")
+    exit()
 
+cv2.namedWindow("image")
+cv2.createTrackbar("H_low", "image", 0, 179, nothing)
+cv2.createTrackbar("S_low", "image", 0, 255, nothing)
+cv2.createTrackbar("V_low", "image", 0, 255, nothing)
+cv2.createTrackbar("H_up", "image", 179, 179, nothing)
+cv2.createTrackbar("S_up", "image", 255, 255, nothing)
+cv2.createTrackbar("V_up", "image", 255, 255, nothing)
 
-def color_thresholding(image_bgr, h_low=None, s_low=None, v_low=None, h_up=None, s_up=None, v_up=None):
-    image_bgr_norm = cv2.normalize(image_bgr, None, 0, 1, cv2.NORM_MINMAX, dtype=cv2.CV_32FC3)
-    image_hsv = cv2.cvtColor(image_bgr_norm, cv2.COLOR_BGR2HSV)
-    lower_bound = np.array([h_low, s_low, v_low], dtype="float32")
-    higher_bound = np.array([h_up, s_up, v_up], dtype="float32")
-    mask = cv2.inRange(image_hsv, lower_bound, higher_bound)
-    result = cv2.bitwise_and(image_bgr, image_bgr, mask=mask)
+while True:
+    h_low = cv2.getTrackbarPos("H_low", "image")
+    s_low = cv2.getTrackbarPos("S_low", "image")
+    v_low = cv2.getTrackbarPos("V_low", "image")
+    h_up = cv2.getTrackbarPos("H_up", "image")
+    s_up = cv2.getTrackbarPos("S_up", "image")
+    v_up = cv2.getTrackbarPos("V_up", "image")
 
+    # Convert to HSV (standard range: H:0-179, S:0-255, V:0-255)
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    lower = np.array([h_low, s_low, v_low])
+    upper = np.array([h_up, s_up, v_up])
+    mask = cv2.inRange(hsv, lower, upper)
+    result = cv2.bitwise_and(img, img, mask=mask)
 
-image_read("Data/flowers.jpg")
+    cv2.imshow("image", result)
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        break
+
 cv2.destroyAllWindows()
